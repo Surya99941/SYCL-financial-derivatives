@@ -1,0 +1,3 @@
+[submodule "vendor/sciplot"]
+	path = vendor/sciplot
+	url = https://github.com/sciplot/sciplot

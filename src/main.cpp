@@ -14,10 +14,10 @@ int main() {
 
 
     //Initialize Constants
-    const float dt = 1;               //time difference between concecutive stock prices
     const int T = 252;                //No of days to be calculated
-    const int samples = 100;          //No of samples
-    const int N = T/dt;               //No of calculations per day (obsolete :>)
+    const int samples = 3000;          //No of samples
+    const int N = T;               //No of calculations per day (obsolete :>)
+    const double dt = 1/T; 
     const int size = N*samples;       //Size of buffer
 
     //Read data
@@ -35,19 +35,18 @@ int main() {
     auto temp = Mesd(data);
     const double mean =temp.first, stdDev = temp.second;
 
-    //Host side buffer
-    double res[size];
 
     const double s0 = data[data.size()-1].close;
+    std::cout<<mean<<" | "<<stdDev<<std::endl;
+    
+    //Buffer for storing paths
+    sycl::buffer<double,1> buf((sycl::range<1>(size)));
+    sycl::buffer<double,1> norm((sycl::range<1>(size)));
 
     {   //Sycl Section
-
-        //Intialize Buffer for single sample
-        //Buffer in GPU written back once scope ends
-        sycl::buffer<double,1> buf(res, size);
-
         q.submit([&] (sycl::handler& h) {
             auto dbuf = buf.get_access<sycl::access::mode::write>(h);
+            auto z = norm.get_access<sycl::access::mode::write>(h);
 
             h.parallel_for<class VecAdd>
                 (
@@ -56,34 +55,38 @@ int main() {
 
                     //Generate Random normal number epx
                     std::uint64_t offset = index.get_linear_id();
-                    oneapi::dpl::minstd_rand engine(777, offset);
+                    oneapi::dpl::minstd_rand engine(1, offset);
                     oneapi::dpl::normal_distribution<float> distr(0,1);
-
+                    z[index] = distr(engine);
                     //Actual Calculation of GBM
-                    double drift = mean-(0.2*pow(stdDev,2));
-                    double epx = distr(engine)*stdDev*0.01;
-                    dbuf[index+1] = std::exp( drift + epx );
+                    double drift = (mean-(0.5*pow(stdDev,2)))*dt;
+                    double epx = stdDev * z[index];
+                    dbuf[index] = std::exp( drift + epx );
             }
             );
-        });
+        }).wait();
     }
 
+    //Copy to host buffer
+    auto buf_cpu = buf.get_access<sycl::access::mode::read_write>();
+    auto norm_cpu = norm.get_access<sycl::access::mode::read_write>();
+    double* res = buf_cpu.get_pointer();
+
+    
+    //for (int i = 0; i < size; i++){ std::cout<<res[i]<<" , ";}
+    std::cout<<std::endl;
+    //for (int i = 0; i < size; i++){ std::cout<<norm_cpu[i]<<" , ";}
+    std::cout<<std::endl;
+
+    res[0] = s0;
     for (int i = 1; i < size; i++){
         //if its first element of the sample make it S0
-        bool pit = false;
         if(i%N == 0){
-            if(pit) std::cout<<"\n"<<std::endl;
             res[i] = s0;
-            float risk = sharpe_ratio(&res[i],N,0.8);
-            if(risk < 1){
-                pit = true;
-                printf("%d:%f:",i,risk);    
-            }
-            else pit = false;
+           // float risk = sharpe_ratio(&res[i],N,0.8);
         }
         else{ //Si = S(i-1)* calculated value which is in res btw
-            res[i] = res[i]*res[i-1];
-            if(pit) std::cout<<res[i]<<",";
+            res[i] = (res[i]*res[i-1]);
         }
         
     }
