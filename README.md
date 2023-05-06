@@ -23,16 +23,17 @@ $ make cpu # without sycl for benchmarking
 Respective bianries will be at the project directory
 
 # Using
-[Your binary file] -i [path to input csv file] -o [path to output file] -p [true/false] -samp [number of samples] -days [number of days]
- -i [string] is mandatory
- -o [string] optional with default as ./res.pdf
- -p [true/false] true by default
- -samp [integer] optional with default 1000
- -days [integer] optional with default 252
+```[Your binary file] -i [path to input csv file] -o [path to output file] -p [true/false] -samp [number of samples] -days [number of days]```
+ - -i [string] is mandatory : Input file (look at training_data.csv in this repo for format)
+ - -o [string] optional with default as ./res.pdf : output file PDF is reccomended
+ - -p [true/false] true by default : Wheter or not show the plots, keep it false while benchmarking
+ - -samp [integer] optional with default 1000 : How many samples has to be taken
+ - -days [integer] optional with default 252 : How many days in future to look
 
 # Benchmarking
 For benchmarking Run the code with -p as false, since plotting is pretty expensive and done on host.
-Few benchmarks I ran on my system
+Few benchmarks I ran on my system just taken with time command in linux ( so not very accurate, just the basic idea)
+
 CPU: Ryzen 5 5600H (laptop cpu)
 GPU: Nvidia RTX 3060 Laptop GPU
 | Sample | Days | SYCL-GPU(s) | SYCL-CPU(s) | CPU(s) |
