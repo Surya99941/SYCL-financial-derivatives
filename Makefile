@@ -3,7 +3,7 @@ CCS = icpx
 CFLAGS_NV = -std=c++17 -fsycl -fsycl-targets=nvptx64-nvidia-cuda
 CFLAGS = "-I./vendor/sciplot"
 
-EXECUTABLE = ./main
+EXECUTABLE = ./GBM
 
 
 clean:
