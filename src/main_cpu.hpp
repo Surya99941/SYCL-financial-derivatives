@@ -12,8 +12,6 @@
 #include <unordered_map>
 #include <stdio.h>
 #include <sciplot/sciplot.hpp>
-#include <oneapi/dpl/random>
-#include <CL/sycl.hpp>
 
 namespace plt = sciplot;
 

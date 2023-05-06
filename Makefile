@@ -1,28 +1,19 @@
 CC = clang++
-CFLAGS = -std=c++17 -fsycl -fsycl-targets=nvptx64-nvidia-cuda
+CCS = icpx
+CFLAGS_NV = -std=c++17 -fsycl -fsycl-targets=nvptx64-nvidia-cuda
+CFLAGS = "-I./vendor/sciplot"
 
-EXECUTABLE = main
+EXECUTABLE = ./main
 
-SOURCES = src/main.cpp
-OBJECTS = $(SOURCES:.cpp=.o)
 
 clean:
 	rm -f $(EXECUTABLE)
 
-all:
-	clear
-	echo "compile started"
-	$(CC) $(CFLAGS) $(SOURCES) -o $(EXECUTABLE)
-	echo "compile done"
-	echo "Executing program"
-	/usr/bin/time ./$(EXECUTABLE)
+cpu:
+	$(CC) $(CFLAGS) -O3 src/main_cpu.cpp -o $(EXECUTABLE)_cpu
 
-run:
-	./$(EXECUTABLE)
+cpusycl:
+	$(CCS) $(CFLAGS) -fsycl -O3 src/main_cpu_sycl.cpp -o $(EXECUTABLE)_cpusycl
 
-compile:
-	$(CC) $(CFLAGS) $(SOURCES) -o $(EXECUTABLE)
-
-
-compile-debug:
-	$(CC) $(CFLAGS) -g $(SOURCES) -o $(EXECUTABLE)
+gpu:
+	$(CC) $(CFLAGS_NV) $(CFLAGS) -O3 src/main.cpp -o $(EXECUTABLE)_gpu

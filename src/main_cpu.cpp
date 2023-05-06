@@ -1,6 +1,6 @@
-#include "main.hpp"
+#include "main_cpu.hpp"
 #include "sciplot/Vec.hpp"
-
+#include <random>
 
 
 // days = No of days to be calculated + 1 is to store initial value for calculation
@@ -29,69 +29,46 @@ int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool 
 
 
         //Buffer for storing paths
-        sycl::buffer<double,1> buf((sycl::range<1>(size)));
+        std::vector<double> buf(size);
 
-        sycl::queue simulate{sycl::gpu_selector_v};
+        for(int index = 0; index < size; index++) {
+            std::random_device rd;
+            std::mt19937 engine(rd());
+            std::normal_distribution<double> z(0.0, 1.0);
 
-        {   //Sycl Section
-            simulate.submit([&] (sycl::handler& h) {
-                auto dbuf = buf.get_access<sycl::access::mode::write>(h);
 
-                h.parallel_for<class Simulate>
-                    (
-                        sycl::range<1> {static_cast<unsigned int>(size)},
-                [=](sycl::item<1> index) {
-
-                    //Generate Random normal number epx
-                    std::uint64_t offset = index.get_linear_id();
-                    oneapi::dpl::minstd_rand engine(1, offset);
-                    oneapi::dpl::normal_distribution<float> z(0,1);
-                    //Actual Calculation of GBM
-                    double drift = (mean-(0.5*pow(stdDev,2)))*dt;
-                    double epx = stdDev * z(engine);
-                    dbuf[index] = std::exp( drift + epx );
-                }
-                );
-            }).wait();
+            double drift = (mean-(0.5*pow(stdDev,2)))*dt;
+            double epx = stdDev * z(engine);
+            buf[index] = std::exp( drift + epx );
+        }
+        for(int index = 0; index < samples; index++) {
+            const int i = index*days;
+            buf[i] = s0;
+            for(int j = 1; j < days; j++) {
+                buf[i + j] = buf[ i + j-1] * buf[i+j];
+            }
         }
 
-        sycl::queue calculate_path{sycl::gpu_selector_v};
-        {
-            calculate_path.submit([&] (sycl::handler& h) {
-                auto dbuf = buf.get_access<sycl::access::mode::write>(h);
-
-                h.parallel_for<class CalculatePath>(
-                        sycl::range<1> {static_cast<unsigned int>(samples)},
-                [=](sycl::item<1> index) {
-                    const int i = index*days;
-                    dbuf[i] = s0;
-                    for(int j = 1; j < days; j++) {
-                        dbuf[i + j] = dbuf[ i + j-1] * dbuf[i+j];
-                    }
-                });
-            }).wait();
-        }
 
 
         //Copy to host buffer
-        auto buf_cpu = buf.get_access<sycl::access::mode::read_write>();
-        double* res = buf_cpu.get_pointer();
+        double* res = buf.data();
 
-        if(is_plot){
-        plt::Plot2D plot;
-        std::vector<plt::PlotVariant> pl;
+        if(is_plot) {
+            plt::Plot2D plot;
+            std::vector<plt::PlotVariant> pl;
 
-        for (int i = 0; i < samples; i++) {
-            std::vector<double> sample = std::vector<double>(&res[i*days],&res[i*days+days]);
-            plot.drawCurve(plt::linspace(1,days,days),sample).label("");
-        }
-        plot.xlabel("Days : "+stockname);
-        plot.ylabel("Stock Price");
-        plot.size(1280, 720);
-        pl.emplace_back(plot);
-        plt::Figure f = {{pl}};
-        f.title(stockname);
-        plots.emplace_back(f);
+            for (int i = 0; i < samples; i++) {
+                std::vector<double> sample = std::vector<double>(&res[i*days],&res[i*days+days]);
+                plot.drawCurve(plt::linspace(1,days,days),sample).label("");
+            }
+            plot.xlabel("Days : "+stockname);
+            plot.ylabel("Stock Price");
+            plot.size(1280, 720);
+            pl.emplace_back(plot);
+            plt::Figure f = {{pl}};
+            f.title(stockname);
+            plots.emplace_back(f);
         }
 
     }

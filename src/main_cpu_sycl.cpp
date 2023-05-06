@@ -31,7 +31,11 @@ int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool 
         //Buffer for storing paths
         sycl::buffer<double,1> buf((sycl::range<1>(size)));
 
-        sycl::queue simulate{sycl::gpu_selector_v};
+        sycl::queue simulate(sycl::default_selector_v);
+        std::cout
+            << "Running on "
+            << simulate.get_device().get_info<sycl::info::device::name>()
+            << std::endl;
 
         {   //Sycl Section
             simulate.submit([&] (sycl::handler& h) {
@@ -55,7 +59,7 @@ int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool 
             }).wait();
         }
 
-        sycl::queue calculate_path{sycl::gpu_selector_v};
+        sycl::queue calculate_path(sycl::default_selector_v);
         {
             calculate_path.submit([&] (sycl::handler& h) {
                 auto dbuf = buf.get_access<sycl::access::mode::write>(h);
