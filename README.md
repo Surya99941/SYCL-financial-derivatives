@@ -1,5 +1,7 @@
-# SYCL-financial-derivatives
+# SYCL financial derivatives Monte Carlo Simulation
 By team Breakfast Banana for Intel oneapi codemaven hackathon. We developed this project to make GBM based stock prediction much faster using SYCL form intel OneApi.
+
+Github link of the project : https://github.com/Surya99941/SYCL-financial-derivatives
 
 # Requirements
  - Intel oneApi HPC toolkit
