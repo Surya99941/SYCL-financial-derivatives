@@ -45,5 +45,6 @@ GPU: Nvidia RTX 3060 Laptop GPU
 # Other Links 
  - Presentation : https://docs.google.com/presentation/d/18E6k8AlqdnkcgE88PwGWv_S7leb1-_5HQZGlz8ZDV5o/edit?usp=sharing
  - Video : https://drive.google.com/file/d/1B52u-0Nte6kxQoro_3A_MJbyiKGwU9KF/view?usp=sharing
+ - Github : https://github.com/Surya99941/SYCL-financial-derivatives
 
 These files are also available in this repo
