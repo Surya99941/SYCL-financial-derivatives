@@ -38,12 +38,14 @@ Few benchmarks I ran on my system just taken with time command in linux ( so not
 
 CPU: Ryzen 5 5600H (laptop cpu)
 GPU: Nvidia RTX 3060 Laptop GPU
-| Sample | Days | SYCL-GPU(s) | SYCL-CPU(s) | CPU(s) |
-|--------|------|-------------|-------------|--------|
-| 1000   | 252  | 1.2         | 1.38        | 3.55   |
-| 10000  | 252  | 1.3         | 1.43        | 40     |
-| 50000  | 252  | 1.46        | 4.19        | 177.19 |
-| 100000 | 252  | 1.67        | 8.44        | 355    |
+| Sample  | Days    | SYCL-GPU(s) | SYCL-CPU(s) | CPU(s) |
+|---------|---------|-------------|-------------|--------|
+| 1000    | 252     | 1.28        | 1.38        | 3.55   |
+| 10000   | 252     | 1.3         | 1.42        | 40     |
+| 50000   | 252     | 1.46        | 1.72        | 177.19 |
+| 524288  | 1000000 | 2.08        | 4.44        | -      |
+| 1048576 | 1000000 | 3.99        | 9.95        | -      |
+| 2097152 | 1000000 | 9.32        | 20.5        | -      |
 
 # Other Links 
  - Presentation : https://docs.google.com/presentation/d/18E6k8AlqdnkcgE88PwGWv_S7leb1-_5HQZGlz8ZDV5o/edit?usp=sharing
