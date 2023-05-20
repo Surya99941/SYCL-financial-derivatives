@@ -1,5 +1,4 @@
 #include "main.hpp"
-#include "sciplot/Vec.hpp"
 
 
 
@@ -12,7 +11,6 @@ int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool 
 
     //Read data
     std::unordered_map<std::string, std::vector<StockData>> stocklists = ReadFile(ip_file);
-    std::vector<plt::Figure> plots;
     for(auto& [stockname,data]: stocklists) {
         //Sorting based on date
         std::sort(data.begin(),data.end(),DateSort);
@@ -78,30 +76,14 @@ int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool 
         double* res = buf_cpu.get_pointer();
 
         if(is_plot){
-        plt::Plot2D plot;
-        std::vector<plt::PlotVariant> pl;
-
-        for (int i = 0; i < samples; i++) {
-            std::vector<double> sample = std::vector<double>(&res[i*days],&res[i*days+days]);
-            plot.drawCurve(plt::linspace(1,days,days),sample).label("");
-        }
-        plot.xlabel("Days : "+stockname);
-        plot.ylabel("Stock Price");
-        plot.size(1280, 720);
-        pl.emplace_back(plot);
-        plt::Figure f = {{pl}};
-        f.title(stockname);
-        plots.emplace_back(f);
+            
         }
 
     }
 
     if(is_plot) {
-        // Create canvas to hold figure
-        plt::Canvas canvas = {{plots}};
-        // Save the plot to a PDF file
-        canvas.size(1280,720);
-        canvas.save(op_file);
+        GLplot plt(1280,720);
+        plt.draw();
     }
 
     return 0;
