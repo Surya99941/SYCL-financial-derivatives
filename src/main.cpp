@@ -1,4 +1,5 @@
 #include "main.hpp"
+
 // days = No of days to be calculated + 1 is to store initial value for calculation
 // samples = No of samples
 int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool is_plot) {

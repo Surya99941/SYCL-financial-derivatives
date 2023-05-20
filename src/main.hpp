@@ -11,11 +11,9 @@
 #include <iostream>
 #include <unordered_map>
 #include <stdio.h>
-#include <sciplot/sciplot.hpp>
 #include "glplot.hpp"
 #include <oneapi/dpl/random>
 #include <CL/sycl.hpp>
-
 
 struct Date{
   int day;

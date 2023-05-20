@@ -10,12 +10,21 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLFW REQUIRED glfw3)
 
-FILE(GLOB SOURCES	${CMAKE_SOURCE_DIR}/src/* )
-set(SOURCES ${SOURCES} ${CMAKE_SOURCE_DIR}/src/glad/glad.c)
+FILE(GLOB SRCS	 ${CMAKE_SOURCE_DIR}/src/* )
+set(SRCS ${SRCS} ${CMAKE_SOURCE_DIR}/src/glad/glad.c )
 set(TARGET main)
 
-add_executable(${TARGET} ${SOURCES})
+
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GLFW REQUIRED glfw3)
+add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/imgui)
+
+add_executable(${TARGET} ${SRCS})
+
 target_link_libraries(${TARGET} ${GLFW_LIBRARIES})
-target_include_directories(${TARGET} PUBLIC "${CMAKE_SOURCE_DIR}/vendor/sciplot")
+target_link_directories(${TARGET} PUBLIC ${CMAKE_SOURCE_DIR}/vendor/imgui)
+target_link_libraries(${TARGET} imgui)
+target_include_directories(${TARGET} PUBLIC "${CMAKE_SOURCE_DIR}/vendor/imgui")
 
 
