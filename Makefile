@@ -16,4 +16,4 @@ cpusycl:
 	$(CCS) $(CFLAGS) -fsycl -O3 src/main_cpu_sycl.cpp -o $(EXECUTABLE)_cpusycl
 
 gpu:
-	$(CC) $(CFLAGS_NV) $(CFLAGS) -O3 src/main.cpp -o $(EXECUTABLE)_gpu
+	$(CC) $(CFLAGS_NV) $(CFLAGS) -lglfw -O3 src/main.cpp -o $(EXECUTABLE)_gpu
