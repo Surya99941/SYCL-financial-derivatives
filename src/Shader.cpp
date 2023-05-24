@@ -94,12 +94,11 @@ Shader::m_add_program(){
 
 void
 Shader::bind_shader(){
-    Shader* sh = Shader::CurrentlyBound;
     if(Shader::CurrentlyBound != nullptr){
         Shader::CurrentlyBound->unbind_shader();
     }
     Shader::CurrentlyBound = this;
-    glUseProgram(ID);
+    glUseProgram(this->ID);
     m_bound = 1;
 }
 

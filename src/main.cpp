@@ -44,7 +44,7 @@ int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool 
                     oneapi::dpl::normal_distribution<float> z(0,1);
                     //Actual Calculation of GBM
                     double drift = (mean-(0.5*pow(stdDev,2)))*dt;
-                    double epx = stdDev * z(engine);
+                    double epx = stdDev * z(engine) * dt;
                     dbuf[index] = std::exp( drift + epx );
                 }
                 );

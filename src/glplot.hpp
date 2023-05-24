@@ -1,6 +1,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <implot.h>
 
 #include <iostream>
 #include "glad/glad.h"
@@ -41,8 +42,10 @@ private:
     int m_height;
     int points;
     GLFWwindow* m_window;
-    GLuint vbo;
-    GLuint vao;
+    double* data;
+    double* days;
+    int ndays;
+    int nsamples;
     
 public:
     GLplot(const int width, const int height)
@@ -75,6 +78,7 @@ public:
         //Initialize IMGUI
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
+        ImPlot::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable keyboard controls
         ImGui::StyleColorsDark();  // Apply a dark theme
@@ -90,33 +94,24 @@ public:
         glfwSetErrorCallback(error_callback);
         glfwSetKeyCallback(m_window, key_callback);
         // Set up the OpenGL context
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     void add_data(double* dataptr, long int samples, long int days){
         this->points = samples*days;
+        ndays = days;
+        nsamples = samples;
         double max,min;
         for(int i = 0; i < samples*days; i++){
             max = (max > dataptr[i])?max:dataptr[i];
             min = (min < dataptr[i])?min:dataptr[i];
         }
-        stdata data[samples*days];
+        this->data = (double *)malloc(sizeof(double) * points);
+        this->days = (double *)malloc(sizeof(double) * points);
         for(int i = 0; i < samples*days; i++){
-            data[i].day=i%days;
-            data[i].value=map_range<double>(dataptr[i],min,max,-1,1);
+            this->data[i] = map_range<double>(dataptr[i],min,max,-1,1);
+            this->days[i] = i%days;
         }
-        glGenBuffers(1,&vbo);
-        glGenVertexArrays(1,&vao);
-        
-        glBindVertexArray(vao);
-
-        glBindBuffer(GL_ARRAY_BUFFER,vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0,1,GL_FLOAT,GL_TRUE,sizeof(stdata),(void*)offsetof(stdata, value));
-        glVertexAttribPointer(1,1,GL_FLOAT,GL_TRUE,sizeof(stdata),(void*)offsetof(stdata, day));
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
     }
 
     void draw(){
@@ -132,16 +127,18 @@ public:
             ImGui::Begin("My Window");  // Begin a new ImGui window
     
             // Add UI elements
-            static char inputText[256] = "Input something";
-            if (ImGui::Button("Click Me!")){
-                printf("%s\n",inputText);
+            if (ImPlot::BeginPlot("Dual Axis Plot", "X", "Y1")){
+                for(int i = 0; i < nsamples; i++){
+                    ImPlot::PlotLine("Y1 Data", &days[i*ndays], &data[i*ndays], ndays);
+                }
             }
-    
-            ImGui::InputText("Text Input", inputText, sizeof(inputText));
+            ImPlot::EndPlot();
 
+            
             ImGui::End();  // End the ImGui window
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 
             glfwSwapBuffers(m_window);
         }
@@ -151,6 +148,7 @@ public:
     ~GLplot(){
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();
+        ImPlot::DestroyContext();
         ImGui::DestroyContext();
         glfwDestroyWindow(m_window);
         glfwTerminate();
