@@ -8,75 +8,72 @@ int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool 
     const int size = days*samples;     //Size of buffer
 
     //Read data
-    std::unordered_map<std::string, std::vector<StockData>> stocklists = ReadFile(ip_file);
-    for(auto& [stockname,data]: stocklists) {
-        //Sorting based on date
-        std::sort(data.begin(),data.end(),DateSort);
-        {
-            int t = data.size();
-            int b = t -500;
-            data = std::vector(data.begin()+b,data.end());
-        }
-
-        //Calculate Mean and SD
-        auto temp = Mesd(data);
-        const double mean =temp.first, stdDev = temp.second;
-        const double s0 = data[data.size()-1].close;
-
-
-        //Buffer for storing paths
-        sycl::buffer<double,1> buf((sycl::range<1>(size)));
-
-        sycl::queue simulate{sycl::gpu_selector_v};
-
-        {   //Sycl Section
-            simulate.submit([&] (sycl::handler& h) {
-                auto dbuf = buf.get_access<sycl::access::mode::write>(h);
-
-                h.parallel_for<class Simulate>
-                    (
-                        sycl::range<1> {static_cast<unsigned int>(size)},
-                [=](sycl::item<1> index) {
-
-                    //Generate Random normal number epx
-                    std::uint64_t offset = index.get_linear_id();
-                    oneapi::dpl::minstd_rand engine(1, offset);
-                    oneapi::dpl::normal_distribution<float> z(0,1);
-                    //Actual Calculation of GBM
-                    double drift = (mean-(0.5*pow(stdDev,2)))*dt;
-                    double epx = stdDev * z(engine) * dt;
-                    dbuf[index] = std::exp( drift + epx );
-                }
-                );
-            }).wait();
-        }
-
-        sycl::queue calculate_path{sycl::gpu_selector_v};
-        {
-            calculate_path.submit([&] (sycl::handler& h) {
-                auto dbuf = buf.get_access<sycl::access::mode::write>(h);
-
-                h.parallel_for<class CalculatePath>(
-                        sycl::range<1> {static_cast<unsigned int>(samples)},
-                [=](sycl::item<1> index) {
-                    const int i = index*days;
-                    dbuf[i] = s0;
-                    for(int j = 1; j < days; j++) {
-                        dbuf[i + j] = dbuf[ i + j-1] * dbuf[i+j];
-                    }
-                });
-            }).wait();
-        }
-
-
-        //Copy to host buffer
-        auto buf_cpu = buf.get_access<sycl::access::mode::read_write>();
-        double* res = buf_cpu.get_pointer();
-
-        GLplot myplot(1280,720);
-        myplot.add_data(res, samples, days);
-        myplot.draw();
+    std::vector<StockData> data = ReadFile(ip_file);
+    
+    //Sorting based on date
+    std::sort(data.begin(),data.end(),DateSort);
+    for(auto o : data){
+        std::cout << o.close <<" "<< o.date.day<<" "<<o.date.month<<" "<<o.date.year<<" "<<std::endl;
     }
+
+    //Calculate Mean and SD
+    auto temp = Mesd(data);
+    const double mean =temp.first, stdDev = temp.second;
+    const double s0 = data[data.size()-1].close;
+
+
+    //Buffer for storing paths
+    sycl::buffer<double,1> buf((sycl::range<1>(size)));
+
+    sycl::queue simulate{sycl::gpu_selector_v};
+
+    {   //Sycl Section
+        simulate.submit([&] (sycl::handler& h) {
+            auto dbuf = buf.get_access<sycl::access::mode::write>(h);
+
+            h.parallel_for<class Simulate>
+                (
+                    sycl::range<1> {static_cast<unsigned int>(size)},
+            [=](sycl::item<1> index) {
+
+                //Generate Random normal number epx
+                std::uint64_t offset = index.get_linear_id();
+                oneapi::dpl::minstd_rand engine(1, offset);
+                oneapi::dpl::normal_distribution<float> z(0,1);
+                //Actual Calculation of GBM
+                double drift = (mean- (0.5*(stdDev*stdDev)) ) * dt;
+                double epx = stdDev * z(engine);
+                dbuf[index] = std::exp( drift + epx );
+            }
+            );
+        }).wait();
+    }
+
+    sycl::queue calculate_path{sycl::gpu_selector_v};
+    {
+        calculate_path.submit([&] (sycl::handler& h) {
+            auto dbuf = buf.get_access<sycl::access::mode::write>(h);
+
+            h.parallel_for<class CalculatePath>(
+                    sycl::range<1> {static_cast<unsigned int>(samples)},
+            [=](sycl::item<1> index) {
+                const int i = index*days;
+                dbuf[i] = s0;
+                for(int j = 1; j < days; j++) {
+                    dbuf[i + j] = dbuf[ i + j-1] * dbuf[i+j];
+                }
+            });
+        }).wait();
+    }
+
+
+    //Copy to host buffer
+    auto buf_cpu = buf.get_access<sycl::access::mode::read_write>();
+    double* res = buf_cpu.get_pointer();
+
+    GLplot myplot(1280,720);
+    myplot.add_data(res, samples, days);
+    myplot.draw();
     return 0;
 }
 

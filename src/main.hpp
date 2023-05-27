@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cmath>
 #include <array>
-#include "csv.h"
+#include "rapidcsv.h"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -22,19 +22,19 @@ struct Date{
   std::string st_date;
   Date(std::string st){
     st_date = st;
-    day   = std::stoi(st.substr(0,2));
-    month = std::stoi(st.substr(3,2));
-    year  = std::stoi(st.substr(6,4));
+    //"2023-02-22";
+    day   = std::stoi(st.substr(0,4));
+    month = std::stoi(st.substr(5,2));
+    year  = std::stoi(st.substr(8,2));
   }
 };
 
 struct StockData{
-  StockData(std::string date, std::string name, double ret,double cls,double opn)
+  StockData(std::string date, std::string name, double ret,double cls)
   : date(date)
   , name(name)
   , stock_return(ret)
   , close(cls)
-  , open(opn)
   {
     log_return = std::log(1+ret);
   }
@@ -77,30 +77,26 @@ bool DateSort(StockData& A, StockData& B){
 }
 
 
-std::unordered_map<std::string, std::vector<StockData>> ReadFile(const char* file){
+std::vector<StockData> ReadFile(const char* file){
     //Read CSV
-    io::CSVReader<7> mycsv(file);
-    mycsv.read_header(io::ignore_extra_column, "Date",	"Open",	"High",	"Low", "Close",	"Volume",	"Stock");
-    std::string Date, Stock;
-    double Open, High, Low, Close, Volume,prev_close=0;
+    rapidcsv::Document doc(file);
+    std::string Stock = "AMZN";
+    std::vector<double> close = doc.GetColumn<double>("Close");
+    std::vector<std::string> date = doc.GetColumn<std::string>("Date");
+    double prev_close = 0;
     bool has_prev = false;
     std::vector<StockData> stocks;
 
-    while(mycsv.read_row(Date,Open,High,Low,Close,Volume,Stock)) {
+    for(int i = 0; i < close.size(); i++) {
         if(has_prev == false) {
-          prev_close = Close;
+          prev_close = close[i];
           has_prev = true;
         }
-        else stocks.emplace_back(Date,Stock,(prev_close - Close)/Close,Close,Open);
+        //StockData(std::string date, std::string name, double ret,double cls)
+        else stocks.emplace_back(date[i],Stock,(prev_close - close[i])/close[i],close[i]);
     }
 
-    //Seperate Stocks
-    std::unordered_map<std::string, std::vector<StockData>> stocklists;
-
-    for( StockData i : stocks) {
-        stocklists[i.name].push_back(i);
-    }
-    return stocklists;
+    return stocks;
 }
 
 
