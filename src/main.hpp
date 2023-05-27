@@ -2,49 +2,18 @@
 
 
 #include <cstddef>
+#include "rapidcsv.h"
 #include <iostream>
 #include <cmath>
 #include <array>
-#include "rapidcsv.h"
 #include <vector>
 #include <string>
-#include <iostream>
-#include <unordered_map>
 #include <stdio.h>
 #include "glplot.hpp"
+#include "stockdata.hpp"
 #include <oneapi/dpl/random>
 #include <CL/sycl.hpp>
 
-struct Date{
-  int day;
-  int month;
-  int year;
-  std::string st_date;
-  Date(std::string st){
-    st_date = st;
-    //"2023-02-22";
-    day   = std::stoi(st.substr(0,4));
-    month = std::stoi(st.substr(5,2));
-    year  = std::stoi(st.substr(8,2));
-  }
-};
-
-struct StockData{
-  StockData(std::string date, std::string name, double ret,double cls)
-  : date(date)
-  , name(name)
-  , stock_return(ret)
-  , close(cls)
-  {
-    log_return = std::log(1+ret);
-  }
-  Date date;
-  std::string name;
-  double stock_return;
-  double log_return;
-  double close;
-  double open;
-};
 
 std::pair<double,double> Mesd(std::vector<StockData>& v){
   double mean = 0;
@@ -93,7 +62,7 @@ std::vector<StockData> ReadFile(const char* file){
           has_prev = true;
         }
         //StockData(std::string date, std::string name, double ret,double cls)
-        else stocks.emplace_back(date[i],Stock,(prev_close - close[i])/close[i],close[i]);
+        else stocks.emplace_back(date[i],Stock,(close[i] - prev_close)/close[i],close[i]);
     }
 
     return stocks;

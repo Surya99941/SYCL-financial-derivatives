@@ -7,13 +7,11 @@
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 
+#include "stockdata.hpp"
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
-struct stdata{
-    float value;
-    float day;  
-};
 
 template <class T>
 T map_range(T value, T fmin, T fmax, T tmin, T tmax){
@@ -46,6 +44,8 @@ private:
     double* days;
     int ndays;
     int nsamples;
+    std::vector<double> old_data;
+    std::vector<std::string> old_days;
     
 public:
     GLplot(const int width, const int height)
@@ -97,19 +97,18 @@ public:
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
-    void add_data(double* dataptr, long int samples, long int days){
+    void add_data(double* dataptr, long int samples, long int days, std::vector<StockData> old){
+        for(auto o: old){
+            old_data.push_back(o.close);
+            old_days.push_back(o.date.st_date);
+        }
         this->points = samples*days;
         ndays = days;
         nsamples = samples;
-        double max,min;
-        for(int i = 0; i < samples*days; i++){
-            max = (max > dataptr[i])?max:dataptr[i];
-            min = (min < dataptr[i])?min:dataptr[i];
-        }
         this->data = (double *)malloc(sizeof(double) * points);
         this->days = (double *)malloc(sizeof(double) * points);
         for(int i = 0; i < samples*days; i++){
-            this->data[i] = map_range<double>(dataptr[i],min,max,-1,1);
+            this->data[i] = dataptr[i];
             this->days[i] = i%days;
         }
     }
@@ -129,6 +128,7 @@ public:
             // Add UI elements
             if (ImPlot::BeginPlot("Dual Axis Plot", "X", "Y1")){
                 for(int i = 0; i < nsamples; i++){
+                    ImPlot::SetNextLineStyle(IMPLOT_AUTO_COL);
                     ImPlot::PlotLine("Y1 Data", &days[i*ndays], &data[i*ndays], ndays);
                 }
             }

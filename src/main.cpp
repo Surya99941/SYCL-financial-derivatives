@@ -39,10 +39,10 @@ int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool 
                 //Generate Random normal number epx
                 std::uint64_t offset = index.get_linear_id();
                 oneapi::dpl::minstd_rand engine(1, offset);
-                oneapi::dpl::normal_distribution<float> z(0,1);
+                oneapi::dpl::normal_distribution<float> z(0,stdDev);
                 //Actual Calculation of GBM
                 double drift = (mean- (0.5*(stdDev*stdDev)) ) * dt;
-                double epx = stdDev * z(engine);
+                double epx = z(engine);
                 dbuf[index] = std::exp( drift + epx );
             }
             );
@@ -72,7 +72,7 @@ int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool 
     double* res = buf_cpu.get_pointer();
 
     GLplot myplot(1280,720);
-    myplot.add_data(res, samples, days);
+    myplot.add_data(res, samples, days, data);
     myplot.draw();
     return 0;
 }
