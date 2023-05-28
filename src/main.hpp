@@ -19,9 +19,7 @@ std::pair<double,double> Mesd(std::vector<StockData>& v){
   double mean = 0;
   for(auto i = v.begin()+100; i != v.end(); i++) {
     mean += i->log_return;
-    std::cout<<i->log_return<<")+(";
   }
-  std::cout<<std::endl<<v.size();
   mean = mean/v.size();
   
   double sd = 0;

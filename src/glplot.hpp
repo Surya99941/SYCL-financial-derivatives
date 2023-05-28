@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdlib>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -15,10 +16,17 @@ void processInput(GLFWwindow *window);
 
 
 template <class T>
-T map_range(T value, T fmin, T fmax, T tmin, T tmax){
-    T normalized_value = (value - fmin) / (tmax - fmin);
-    // Map the normalized value to the new range
-    return tmin + normalized_value * (tmax - tmin);
+T map_range(T value, T inMin, T inMax, T outMin, T outMax){
+    value = std::max(value, inMin);
+    value = std::min(value, inMax);
+
+    // Map the value to the output range
+    T inRange = inMax - inMin;
+    T outRange = outMax - outMin;
+    T scaledValue = (value - inMin) / inRange;
+    T mappedValue = outMin + (scaledValue * outRange);
+
+    return mappedValue;
 }
 
 
@@ -45,7 +53,9 @@ private:
     int nsamples;
     std::vector<double> old_data;
     std::vector<std::string> old_days;
-    double* last_day;
+    double* hist_data;
+    double* hist_steps;
+    int bin_size;
     
 public:
     int m_width;
@@ -121,10 +131,37 @@ public:
             this->stock_days[i] = i%days;
         }
         
-        last_day = (double*)malloc(nsamples*sizeof(double));
+        std::vector<double> last_day(nsamples);
         for( int i = 1; i <= samples; i++){
             last_day[i] = dataptr[i*days-1];
         }
+
+        double min = *std::min_element(last_day.begin(),last_day.end());
+        double max = *std::max_element(last_day.begin(),last_day.end());
+
+        //Allocations
+        bin_size = (nsamples > 100)? nsamples/10:nsamples;
+        hist_data = (double*)malloc(sizeof(double)*bin_size);
+        hist_steps = (double*)malloc(sizeof(double)*bin_size);
+        for(int i = 0; i < bin_size; i++){
+            hist_data[i] = hist_steps[i] = 0;
+        }
+
+        //Fill Buckets
+        for(double& i : last_day){
+            int bucket = std::floor(map_range<double>( i, min, max, 1, bin_size));
+            printf("Value = %lf, Bucket = %d \n",i,bucket);
+            hist_data[bucket]+=1;
+        }
+        printf("\n");
+        //Calculate steps
+        double step = (max-min)/bin_size;
+        for(int i = 0; i < bin_size; i++){
+            hist_steps[i] = (i)*step + min;
+        }
+
+        printf("Min=%lf,Max=%lf,bins=%d,step=%lf\n",min,max,bin_size,step);
+        for(int i = 0; i < bin_size; i++) printf("%d | %lf | %lf\n",i,hist_steps[i],hist_data[i]);
     }
 
     void draw(){
@@ -159,7 +196,7 @@ public:
             // Add UI elements
             if (ImPlot::BeginPlot("Price Histogram", ImVec2(m_width/2,m_height))){
                 for(int i = 0; i < nsamples; i++){
-                    ImPlot::PlotHistogram("Histogram", last_day, nsamples, 100);
+                    ImPlot::PlotLine("Histogram",hist_steps,hist_data,bin_size);
                 }
             }
             ImPlot::EndPlot();
@@ -182,6 +219,9 @@ public:
         ImGui::DestroyContext();
         glfwDestroyWindow(m_window);
         glfwTerminate();
+
+        free(hist_data);
+        free(hist_steps);
     }
 };
 
