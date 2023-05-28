@@ -4,7 +4,8 @@
 // samples = No of samples
 int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool is_plot) {
     days++;
-    const double dt = 1/days;          //Scaling factor for drift
+    const double dt = 1/float(days);          //Scaling factor for drift
+    const double sqrt_dt = std::sqrt(dt);
     const int size = days*samples;     //Size of buffer
 
     //Read data
@@ -12,9 +13,6 @@ int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool 
     
     //Sorting based on date
     std::sort(data.begin(),data.end(),DateSort);
-    for(auto o : data){
-        std::cout << o.close <<" "<< o.date.day<<" "<<o.date.month<<" "<<o.date.year<<" "<<std::endl;
-    }
 
     //Calculate Mean and SD
     auto temp = Mesd(data);
@@ -39,10 +37,10 @@ int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool 
                 //Generate Random normal number epx
                 std::uint64_t offset = index.get_linear_id();
                 oneapi::dpl::minstd_rand engine(1, offset);
-                oneapi::dpl::normal_distribution<float> z(0,stdDev);
+                oneapi::dpl::normal_distribution<float> z(0,1);
                 //Actual Calculation of GBM
-                double drift = (mean- (0.5*(stdDev*stdDev)) ) * dt;
-                double epx = z(engine);
+                double drift = ( mean-(0.01*stdDev*stdDev) ) * dt;
+                double epx = stdDev*z(engine)*sqrt_dt;
                 dbuf[index] = std::exp( drift + epx );
             }
             );

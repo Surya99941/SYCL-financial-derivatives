@@ -1,15 +1,16 @@
+#include <cstdlib>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <implot.h>
 
 #include <iostream>
+#include <algorithm>
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 
 #include "stockdata.hpp"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
 
@@ -36,18 +37,25 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 class GLplot {
 private:
-    int m_width;
-    int m_height;
     int points;
     GLFWwindow* m_window;
-    double* data;
-    double* days;
+    double* stock_data;
+    double* stock_days;
     int ndays;
     int nsamples;
     std::vector<double> old_data;
     std::vector<std::string> old_days;
+    double* last_day;
     
 public:
+    int m_width;
+    int m_height;
+    static void framebuffer_size_callback(GLFWwindow* window, int width, int height){
+        GLplot* glplot_window = static_cast<GLplot*>(glfwGetWindowUserPointer(window));
+        glplot_window->m_height = height;
+        glplot_window->m_width  = width; 
+        glViewport(0, 0, width, height);
+    }
     GLplot(const int width, const int height)
     :m_width(width)
     ,m_height(height)
@@ -61,6 +69,7 @@ public:
 
         // Create a window object
         m_window = glfwCreateWindow(width, height, "Plot Window", NULL, NULL);
+        glfwSetWindowUserPointer(m_window, this);
         
         if (m_window == NULL)
         {
@@ -105,11 +114,16 @@ public:
         this->points = samples*days;
         ndays = days;
         nsamples = samples;
-        this->data = (double *)malloc(sizeof(double) * points);
-        this->days = (double *)malloc(sizeof(double) * points);
+        this->stock_data = (double *)malloc(sizeof(double) * points);
+        this->stock_days = (double *)malloc(sizeof(double) * points);
         for(int i = 0; i < samples*days; i++){
-            this->data[i] = dataptr[i];
-            this->days[i] = i%days;
+            this->stock_data[i] = dataptr[i];
+            this->stock_days[i] = i%days;
+        }
+        
+        last_day = (double*)malloc(nsamples*sizeof(double));
+        for( int i = 1; i <= samples; i++){
+            last_day[i] = dataptr[i*days-1];
         }
     }
 
@@ -121,21 +135,37 @@ public:
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
+            ImGui::SetNextWindowSize(ImVec2(m_width/2,m_height));
+            ImGui::SetNextWindowPos(ImVec2(0, 0));
 
             // Create your ImGui UI elements here
-            ImGui::Begin("My Window");  // Begin a new ImGui window
+            ImGui::Begin("My Window",NULL,(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove));  // Begin a new ImGui window
     
             // Add UI elements
-            if (ImPlot::BeginPlot("Dual Axis Plot", "X", "Y1")){
+            if (ImPlot::BeginPlot("Stock Price Paths", ImVec2(m_width/2,m_height))){
                 for(int i = 0; i < nsamples; i++){
-                    ImPlot::SetNextLineStyle(IMPLOT_AUTO_COL);
-                    ImPlot::PlotLine("Y1 Data", &days[i*ndays], &data[i*ndays], ndays);
+                    ImPlot::PlotLine("Price Paths", &stock_days[i*ndays], &stock_data[i*ndays], ndays);
                 }
             }
             ImPlot::EndPlot();
+            ImGui::End();
+
+            ImGui::SetNextWindowSize(ImVec2(m_width/2,m_height));
+            ImGui::SetNextWindowPos(ImVec2(m_width/2, 0));
+
+            // Create your ImGui UI elements here
+            ImGui::Begin("My Window2",NULL,(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove));  // Begin a new ImGui window
+    
+            // Add UI elements
+            if (ImPlot::BeginPlot("Price Histogram", ImVec2(m_width/2,m_height))){
+                for(int i = 0; i < nsamples; i++){
+                    ImPlot::PlotHistogram("Histogram", last_day, nsamples, 100);
+                }
+            }
+            ImPlot::EndPlot();
+            ImGui::End();
 
             
-            ImGui::End();  // End the ImGui window
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -155,11 +185,6 @@ public:
     }
 };
 
-// Function called when the window is resized
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
 
 // Function for processing input
 void processInput(GLFWwindow *window)
