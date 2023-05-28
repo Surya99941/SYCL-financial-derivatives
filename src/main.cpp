@@ -1,19 +1,20 @@
 #include "main.hpp"
-
+#include "stockdata.hpp"
+#include "readdata.hpp"
 // days = No of days to be calculated + 1 is to store initial value for calculation
 // samples = No of samples
-int GBM(int& days, int& samples, const char* ip_file, std::string op_file, bool is_plot) {
+int GBM(int& days, int& samples, bool is_plot) {
     days++;
     const double dt = 1/days;          //Scaling factor for drift
     const int size = days*samples;     //Size of buffer
 
     //Read data
-    std::vector<StockData> data = ReadFile(ip_file);
+    std::vector<StockData> data = readdata();
     
     //Sorting based on date
-    std::sort(data.begin(),data.end(),DateSort);
+    //std::sort(data.begin(),data.end(),DateSort);
     for(auto o : data){
-        std::cout << o.close <<" "<< o.date.day<<" "<<o.date.month<<" "<<o.date.year<<" "<<std::endl;
+        std::cout << o.close <<" "<< o.date.day<<" "<<o.date.month<<" "<<o.date.year<<" "<<o.log_return<<std::endl;
     }
 
     //Calculate Mean and SD
@@ -90,14 +91,13 @@ int main(int argc, char* argv[]) {
     bool is_plot = true;
     int samp = 1000;
     int days = 252;
-
     for( int i = 1; i < argc; i++) {
-        if(strcmp("-i",argv[i]) == 0) {
+        /*if(strcmp("-i",argv[i]) == 0) {
             if(i+1 < argc) {
                 input_id = i+1;
             }
             else call_error();
-        }
+        }*/
         if(strcmp("-o",argv[i]) == 0) {
             if(i+1 < argc) {
                 outpath = std::string(argv[i+1]);
@@ -127,11 +127,6 @@ int main(int argc, char* argv[]) {
             else call_error();
         }
     }
-
-    if(input_id == 0) {
-        call_error();
-    }
-
-    GBM(days,samp,argv[input_id], outpath,is_plot);
+    GBM(days,samp,is_plot);
     return 0;
 }
