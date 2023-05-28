@@ -128,7 +128,6 @@ public:
             // Add UI elements
             if (ImPlot::BeginPlot("Dual Axis Plot", "X", "Y1")){
                 for(int i = 0; i < nsamples; i++){
-                    ImPlot::SetNextLineStyle(IMPLOT_AUTO_COL);
                     ImPlot::PlotLine("Y1 Data", &days[i*ndays], &data[i*ndays], ndays);
                 }
             }
