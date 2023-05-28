@@ -47,30 +47,6 @@ bool DateSort(StockData& A, StockData& B){
   return false;
 }
 
-
-std::vector<StockData> ReadFile(const char* file){
-    //Read CSV
-    rapidcsv::Document doc(file);
-    std::string Stock = "AMZN";
-    std::vector<double> close = doc.GetColumn<double>("Close");
-    std::vector<std::string> date = doc.GetColumn<std::string>("Date");
-    double prev_close = 0;
-    bool has_prev = false;
-    std::vector<StockData> stocks;
-
-    for(int i = 0; i < close.size(); i++) {
-        if(has_prev == false) {
-          prev_close = close[i];
-          has_prev = true;
-        }
-        //StockData(std::string date, std::string name, double ret,double cls)
-        else stocks.emplace_back(date[i],Stock,(close[i] - prev_close)/close[i],close[i]);
-    }
-
-    return stocks;
-}
-
-
 double sharpe_ratio(double* returns,int size, double risk_free_rate) {
     double excess_return = 0.0;
     double mean_return = 0.0;

@@ -19,18 +19,15 @@ struct Date{
 };
 
 struct StockData{
-  StockData(std::string date, std::string name, double ret,double cls)
+  StockData(std::string date, double ret,double cls)
   : date(date)
-  , name(name)
   , stock_return(ret)
   , close(cls)
   {
     log_return = std::log(1+ret);
   }
   Date date;
-  std::string name;
   double stock_return;
   double log_return;
   double close;
-  double open;
 };
