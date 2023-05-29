@@ -15,14 +15,14 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* dat
     return totalSize;
 }
 
-std::vector<StockData> readdata() {
+std::vector<StockData> readdata(int days) {
     CURL* curl = curl_easy_init();
     if (curl) {
         std::string apiKey = "8W0PNXMO5O5G4JD6";  // Replace with your Alpha Vantage API key
         std::string symbol = "AAPL";  // Replace with the desired symbol
         std::string function = "TIME_SERIES_DAILY_ADJUSTED";
         std::string url = "https://www.alphavantage.co/query?function=" + function +
-                           "&symbol=" + symbol + "&apikey=" + apiKey + "&datatype=csv";
+                           "&symbol=" + symbol + "&apikey=" + apiKey + "&outputsize=full&datatype=csv";
 
         std::string responseData;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -40,14 +40,16 @@ std::vector<StockData> readdata() {
         std::istringstream iss(responseData);
         std::vector<std::string> lines;
         std::string line;
-        while (std::getline(iss, line)) {
+        int o = 0;
+        while (std::getline(iss, line) && o++ < days) {
             lines.push_back(line);
         }
 
 
         bool has_prev = false;
         double prev_close = 1;
-        double  open, close,high,low,adjustedClose,volume;
+        double  open, close,high,low,adjustedClose;
+        int volume;
         char date[11];
         std::vector<StockData> stockDataList;
         for (int i = 1; i < lines.size(); i++) {
@@ -60,7 +62,6 @@ std::vector<StockData> readdata() {
             if(has_prev == false) {
                 has_prev = true;
                 prev_close = close;
-                continue;
             }
             else{
                 double ret = (close - prev_close)/prev_close;

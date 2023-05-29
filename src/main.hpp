@@ -2,7 +2,6 @@
 
 
 #include <cstddef>
-#include "rapidcsv.h"
 #include <iostream>
 #include <cmath>
 #include <array>
@@ -17,7 +16,7 @@
 
 std::pair<double,double> Mesd(std::vector<StockData>& v){
   double mean = 0;
-  for(auto i = v.begin()+100; i != v.end(); i++) {
+  for(auto i = v.begin(); i != v.end(); i++) {
     mean += i->log_return;
   }
   mean = mean/v.size();
@@ -47,24 +46,3 @@ bool DateSort(StockData& A, StockData& B){
   return false;
 }
 
-double sharpe_ratio(double* returns,int size, double risk_free_rate) {
-    double excess_return = 0.0;
-    double mean_return = 0.0;
-    double std_dev = 0.0;
-
-    // Calculate mean return
-    for (int ret = 0; ret < size; ret++) {
-        mean_return += returns[ret];
-    }
-    mean_return /= size;
-
-    // Calculate excess return and standard deviation
-    for (int i = 0; i < size; i++) {
-        excess_return += returns[i] - risk_free_rate;
-        std_dev += pow(returns[i] - mean_return, 2);
-    }
-    std_dev = sqrt(std_dev / (size - 1));
-
-    // Calculate Sharpe Ratio
-    return excess_return / std_dev;
-}
