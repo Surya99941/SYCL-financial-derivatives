@@ -38,27 +38,25 @@ std::vector<StockData> readdata(int days) {
         }
 
         std::istringstream iss(responseData);
-        std::vector<std::string> lines;
-        std::string line;
-        int o = 0;
-        while (std::getline(iss, line) && o++ < days) {
-            lines.push_back(line);
-        }
-
-
+        
         bool has_prev = false;
         double prev_close = 1;
         double  open, close,high,low,adjustedClose;
         int volume;
         char date[11];
         std::vector<StockData> stockDataList;
-        for (int i = 1; i < lines.size(); i++) {
-            std::string& line = lines[i];
-            
-            int numMatches = sscanf(line.c_str(), "%10[^,],%lf,%lf,%lf,%lf,%d,%lf",
+        stockDataList.reserve(days);
+
+        const char* response =  responseData.c_str();
+        const char* strptr = response;
+        for(int o = 0; o < days;o++) {
+            while(*strptr != '\n') strptr++;
+            strptr++;
+            int numMatches = sscanf(strptr, "%10[^,],%lf,%lf,%lf,%lf,%d,%lf,\n",
                                     date, &open, &high, &low,
                                     &close, &volume, &adjustedClose);
             auto strdate = std::string(date);
+            std::cout<<strdate<<std::endl;
             if(has_prev == false) {
                 has_prev = true;
                 prev_close = close;
@@ -68,8 +66,8 @@ std::vector<StockData> readdata(int days) {
                 prev_close = close;
                 stockDataList.emplace_back(strdate,ret,close);
             }
-
         }
+
         return stockDataList;
     } else {
         std::cerr << "Failed to initialize CURL" << std::endl;
