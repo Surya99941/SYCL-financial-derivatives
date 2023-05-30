@@ -10,6 +10,7 @@
 #include <algorithm>
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
+#include <CL/sycl.hpp>
 
 #include "stockdata.hpp"
 

@@ -71,14 +71,16 @@ int GBM(int& days, int& samples, bool is_plot) {
     }
 
 
-    //Copy to host buffer
-    auto buf_cpu = buf.get_access<sycl::access::mode::read_write>();
-    double* res = buf_cpu.get_pointer();
 
-    GLplot myplot(1280,720);
-    myplot.add_data(res, samples, days, data);
-    myplot.draw();
-    return 0;
+    if(is_plot){
+        //Copy to host buffer
+        auto buf_cpu = buf.get_access<sycl::access::mode::read_write>();
+        double* res = buf_cpu.get_pointer();
+        GLplot myplot(1280,720);
+        myplot.add_data(res, samples, days, data);
+        myplot.draw();
+        return 0;
+    }
 }
 
 void call_error() {

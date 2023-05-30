@@ -8,11 +8,10 @@
 #include <vector>
 #include <string>
 #include <stdio.h>
-#include "glplot.hpp"
 #include "stockdata.hpp"
-#include <oneapi/dpl/random>
 #include <CL/sycl.hpp>
-
+#include "glplot.hpp"
+#include <oneapi/dpl/random>
 
 std::pair<double,double> Mesd(std::vector<StockData>& v){
   double mean = 0;

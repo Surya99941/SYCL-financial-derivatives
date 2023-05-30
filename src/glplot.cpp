@@ -1,6 +1,5 @@
 #include "glplot.hpp"
 
-#include <CL/sycl.hpp>
 
 void processInput(GLFWwindow *window)
 {
