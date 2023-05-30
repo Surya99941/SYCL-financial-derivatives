@@ -1,4 +1,5 @@
 #pragma once
+
 #include "stockdata.hpp"
 #include <iostream>
 #include <string>
@@ -15,14 +16,13 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* dat
     return totalSize;
 }
 
-std::vector<StockData> readdata(int days) {
+std::vector<StockData> readdata(int days,std::string stock_name) {
     CURL* curl = curl_easy_init();
     if (curl) {
         std::string apiKey = "8W0PNXMO5O5G4JD6";  // Replace with your Alpha Vantage API key
-        std::string symbol = "AAPL";  // Replace with the desired symbol
         std::string function = "TIME_SERIES_DAILY_ADJUSTED";
         std::string url = "https://www.alphavantage.co/query?function=" + function +
-                           "&symbol=" + symbol + "&apikey=" + apiKey + "&outputsize=full&datatype=csv";
+                           "&symbol=" + stock_name + "&apikey=" + apiKey + "&outputsize=full&datatype=csv";
 
         std::string responseData;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -56,7 +56,6 @@ std::vector<StockData> readdata(int days) {
                                     date, &open, &high, &low,
                                     &close, &volume, &adjustedClose);
             auto strdate = std::string(date);
-            std::cout<<strdate<<std::endl;
             if(has_prev == false) {
                 has_prev = true;
                 prev_close = close;

@@ -1,0 +1,99 @@
+#include "window.h"
+
+#include <GLFW/glfw3.h>
+#include <iostream>
+
+void processInput(GLFWwindow *window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
+
+
+void error_callback(int error, const char* description)
+{
+    fprintf(stderr, "Error: %s\n", description);
+}
+
+
+
+
+Window::Window(const int width, const int height)
+    :m_width(width)
+    ,m_height(height)
+{
+    if(!glfwInit()) {
+        printf("Error: GLFW Initialization Failed!\n");
+    }
+
+    // Configure GLFW to use OpenGL 3.3 core profile
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    // Create a window object
+    m_window = glfwCreateWindow(width, height, "Plot Window", NULL, NULL);
+    glfwSetWindowUserPointer(m_window, this);
+
+    if (m_window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+    }
+
+    glfwMakeContextCurrent(m_window);
+    // Initialize Glad
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+    }
+
+    //Initialize IMGUI
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImPlot::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable keyboard controls
+    ImGui::StyleColorsDark();  // Apply a dark theme
+
+    // Set up platform/renderer bindings
+    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+
+    // Set up the viewport
+    glViewport(0, 0, m_width, m_height);
+    // Set the callback function for resizing the window
+    glfwSetFramebufferSizeCallback(m_window, framebuffer_size_callback);
+    glfwSetErrorCallback(error_callback);
+    glfwSetKeyCallback(m_window, key_callback);
+    // Set up the OpenGL context
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+}
+bool
+Window::isopen() {
+    return !glfwWindowShouldClose(m_window);
+}
+void
+Window::swapbuffers(int interval = 1) {
+    glfwSwapBuffers(m_window);
+}
+
+void
+Window::before_draw() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glfwPollEvents();
+}
+
+int
+Window::getWidth() {
+    return m_width;
+}
+int
+Window::getHeight() {
+    return m_height;
+}
+
+Window::~Window() {
+    glfwDestroyWindow(m_window);
+    glfwTerminate();
+}
