@@ -14,6 +14,7 @@ void call_error() {
     exit(0);
 }
 
+
 int main(int argc, char* argv[]) {
     /*
         * 0 = Home
@@ -21,12 +22,14 @@ int main(int argc, char* argv[]) {
     */
     int page = 0;
     double* buffer;
+    char searchBuffer[10];
     std::string stock;
     static int samples = 0;
     static int days = 0;
     std::vector<StockData> old_data;
     Window mywindow(1280,720);
     GLplot myplot(mywindow);
+    std::string prev_search = "";
 
     std::cout<<mywindow.isopen()<<std::endl;
     while(mywindow.isopen()) {
@@ -61,6 +64,14 @@ int main(int argc, char* argv[]) {
             ImGui::Text("Number of Days:");
             ImGui::InputInt("##days", &days);
 
+            ImGui::InputText("Search", searchBuffer, sizeof(searchBuffer));
+            std::string sbuf = std::string(searchBuffer);
+            if(sbuf != prev_search && sbuf.length()>1){
+                prev_search = sbuf;
+                auto t = related(sbuf);
+                for (auto x : t) std::cout<<x<<"\n";    
+            }
+
             if (ImGui::Button("Start")) {
                 if     (optionAAPL == true) stock = "AAPL";
                 else if(optionMSFT == true) stock = "MSFT";
@@ -68,9 +79,11 @@ int main(int argc, char* argv[]) {
                 else if(optionINTC == true) stock = "INTC";
                 else if(optionNVDA == true) stock = "NVDA";
 
+
                 const int numdata = (days < 1000)?1000 : ((days*2 < 15000)?(days*2):15000);
                 old_data = readdata(numdata,stock);
                 std::reverse(old_data.begin(),old_data.end());
+                //Beta sharpie
                 buffer = GBM(days,samples,old_data);
                 myplot.add_data(buffer,samples,days,old_data);
                 page = 1;

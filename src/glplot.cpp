@@ -1,5 +1,6 @@
 #include "glplot.hpp"
 
+#include <cstdio>
 #include <vector>
 #include <cmath>
 #include <cstdlib>
@@ -55,7 +56,7 @@ GLplot::add_data(double* dataptr, long int samples, long int days, std::vector<S
     double max = *std::max_element(last_day.begin(),last_day.end());
 
     //Allocations
-    bin_size = (nsamples > 100)? nsamples/10:nsamples;
+    bin_size = 100;
     hist_data = (double*)malloc(sizeof(double)*bin_size);
     hist_steps = (double*)malloc(sizeof(double)*bin_size);
     for(int i = 0; i < bin_size; i++) {
@@ -90,7 +91,9 @@ GLplot::draw() {
         if (ImPlot::BeginPlot("Stock Price Paths", ImVec2(m_window->getWidth()/2,m_window->getHeight()))) {
             ImPlot::PlotLine("Price Paths History", old_days, old_data, ndays_old);
             for(int i = 0; i < nsamples; i++) {
-                ImPlot::PlotLine("Price Paths", &stock_days[i*ndays], &stock_data[i*ndays], ndays);
+                char line_name[20];
+                sprintf(line_name,"Price Path:%d",i);
+                ImPlot::PlotLine(line_name, &stock_days[i*ndays], &stock_data[i*ndays], ndays);
             }
         }
         ImPlot::EndPlot();
