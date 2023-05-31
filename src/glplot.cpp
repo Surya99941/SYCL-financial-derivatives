@@ -1,5 +1,6 @@
 #include "glplot.hpp"
 
+#include <cstddef>
 #include <cstdio>
 #include <vector>
 #include <cmath>
@@ -38,7 +39,10 @@ double probablity_of_breakeven(std::vector<double>& last_days, double base_line,
 GLplot::GLplot(Window& win)
 : m_window(&win)
 {
-    
+    hist_data = NULL;
+    hist_steps = NULL;
+    old_data = NULL;
+    old_days = NULL;
 }
 
 void
@@ -158,8 +162,8 @@ GLplot::~GLplot() {
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
-    free(hist_data);
-    free(hist_steps);
-    free(old_data);
-    free(old_days);
+    if(hist_data  != NULL) free(hist_data);
+    if(hist_steps != NULL) free(hist_steps);
+    if(old_data   != NULL) free(old_data);
+    if(old_days   != NULL) free(old_days);
 }

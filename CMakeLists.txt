@@ -11,7 +11,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLFW REQUIRED glfw3)
 
 FILE(GLOB SRCS	 ${CMAKE_SOURCE_DIR}/src/* )
-set(SRCS ${SRCS} ${CMAKE_SOURCE_DIR}/src/glad/glad.c )
+set(SRCS ${SRCS} ${CMAKE_SOURCE_DIR}/src/glad/glad.c  )
 set(TARGET main)
 
 

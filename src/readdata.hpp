@@ -16,9 +16,8 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* dat
     return totalSize;
 }
 
-std::vector<std::string> related(std::string key){
+void related(std::string key,std::vector<std::string>* search_result, bool* done){
     //https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=BA&apikey=demo&datatype=csv
-    std::vector<std::string> res;
     CURL* curl = curl_easy_init();
     if (curl) {
         std::string apiKey = "8W0PNXMO5O5G4JD6";  // Replace with your Alpha Vantage API key
@@ -36,7 +35,8 @@ std::vector<std::string> related(std::string key){
 
         if (chk != CURLE_OK) {
             std::cerr << "Failed to retrieve data from the API: " << curl_easy_strerror(chk) << std::endl;
-            exit(EXIT_FAILURE);
+            *done = true;
+            return;
         }
 
         const char* response = responseData.c_str();
@@ -46,11 +46,11 @@ std::vector<std::string> related(std::string key){
             read++;
             if(*read == '\0') break;
             char temp[20];
-            sscanf(read,"%s,",temp);
-            res.emplace_back(temp);
+            sscanf(read,"%[^,]",temp);
+            search_result->emplace_back(temp);
         }
     }
-    return res;
+    *done = true;
 }
 
 std::vector<StockData> readdata(int days,std::string stock_name) {

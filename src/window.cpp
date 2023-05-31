@@ -1,7 +1,11 @@
 #include "window.h"
+#include <candy.h>
 
 #include <GLFW/glfw3.h>
 #include <iostream>
+
+extern unsigned char FontData[];
+extern int FontData_size;
 
 void processInput(GLFWwindow *window)
 {
@@ -54,7 +58,12 @@ Window::Window(const int width, const int height)
     ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable keyboard controls
-    ImGui::StyleColorsDark();  // Apply a dark theme
+    ImFontAtlas* fontAtlas = io.Fonts;
+    ImFontConfig config;
+    config.FontDataOwnedByAtlas = false; // Important: Set this to false to prevent ImGui from freeing the font data
+    fontAtlas->AddFontFromMemoryTTF((void*)FontData, FontData_size, 24, &config);
+    
+    ImCandy::Theme_Nord();
 
     // Set up platform/renderer bindings
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
