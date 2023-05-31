@@ -7,6 +7,8 @@
 class GLplot {
 private:
     int points;
+
+    //Left side
     double* stock_data;
     double* stock_days;
     int ndays;
@@ -14,10 +16,17 @@ private:
     double* old_data;
     double* old_days;
     int ndays_old;
+
+    //Right side
     double* hist_data;
     double* hist_steps;
     int bin_size;
 
+    //Metrics Data
+    double expected_return;
+    double return_percent;
+    double probability;
+    
     Window* m_window;
     
 public:
