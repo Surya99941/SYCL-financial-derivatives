@@ -141,12 +141,12 @@ GLplot::draw() {
         ImGui::End();
 
         //Metrics
-        ImGui::SetNextWindowSize(ImVec2(width,height*(1-bh)));
+        ImGui::SetNextWindowSize(ImVec2(width/2,height*(1-bh)));
         ImGui::SetNextWindowPos(ImVec2(0, height*bh));
     }
 
     else {
-        ImGui::SetNextWindowSize(ImVec2(width*bw,height));
+        ImGui::SetNextWindowSize(ImVec2(width*0.75,height*bh));
         ImGui::SetNextWindowPos(ImVec2(0,0));
 
         ImGui::Begin("Histrogram",NULL,(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove));  // Begin a new ImGui window
@@ -160,14 +160,16 @@ GLplot::draw() {
         ImPlot::EndPlot();
         ImGui::End();
 
-        
-        ImGui::SetNextWindowSize(ImVec2(width*(1-bw),height));
-        ImGui::SetNextWindowPos(ImVec2(width*bw, 0));
+        //Metrics
     }
 
     // Create your ImGui UI elements here
 
 
+    if(isplot == false){
+        ImGui::SetNextWindowSize(ImVec2(width*(1-bw),height));
+        ImGui::SetNextWindowPos(ImVec2(width*bw, height));
+    }
     ImGui::Begin("Metrics",NULL,(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove));
     ImGui::Text("Expected Return: $ %f",expected_return);
     ImGui::Text("Return Percent : %f percentage",return_percent);
