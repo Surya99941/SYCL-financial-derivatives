@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <future>
 
+#include "imgui.h"
 #include "stockdata.hpp"
 #include "window.h"
 #include "glplot.hpp"
@@ -49,6 +50,7 @@ int main(int argc, char* argv[]) {
     Window mywindow(1280,720);
     GLplot myplot(mywindow);
     std::string prev_search = "";
+    bool isplot = false;
 /*
     std::vector<std::string> search_result;
     bool search_done = true;
@@ -80,6 +82,8 @@ int main(int argc, char* argv[]) {
             ImGui::InputText("Search", searchBuffer, sizeof(searchBuffer),ImGuiInputTextFlags_CallbackEdit, &TextEditCallback);
             std::string sbuf = std::string(searchBuffer);
 
+            ImGui::Checkbox("Should show Price Paths", &isplot);
+
 /*
             if(search_done && *searchBuffer != '\0'){
                 if (ImGui::BeginCombo("##SearchDropdown", selected.c_str())) {
@@ -106,11 +110,14 @@ int main(int argc, char* argv[]) {
             if (ImGui::Button("Start")) {
                 stock = sbuf;
                 const int numdata = (days < 1000)?1000 : ((days*2 < 15000)?(days*2):15000);
+                ImGui::Text("Reading Data");
                 old_data = readdata(numdata,stock);
                 std::reverse(old_data.begin(),old_data.end());
-                //Beta sharpie
+                
+                ImGui::Text("Making Predictions");
                 buffer = GBM(days,samples,old_data);
-                myplot.add_data(buffer,samples,days,old_data);
+                ImGui::Text("Plotting");
+                myplot.add_data(buffer,samples,days,old_data,isplot);
                 page = 1;
             }
 
@@ -119,7 +126,11 @@ int main(int argc, char* argv[]) {
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
         if(page == 1){
-            myplot.draw();
+            if(myplot.draw() == false){
+                page = 0;
+                free(buffer);
+                buffer = NULL;
+            }
         }
 
         mywindow.swapbuffers(1);

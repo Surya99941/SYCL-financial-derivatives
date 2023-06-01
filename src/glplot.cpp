@@ -11,7 +11,7 @@
 
 
 template <class T>
-T map_range(T value, T inMin, T inMax, T outMin, T outMax){
+T map_range(T value, T inMin, T inMax, T outMin, T outMax) {
     value = std::max(value, inMin);
     value = std::min(value, inMax);
 
@@ -24,20 +24,20 @@ T map_range(T value, T inMin, T inMax, T outMin, T outMax){
     return mappedValue;
 }
 
-double probablity_of_breakeven(std::vector<double>& last_days, double base_line,double& min, double& max){
+double probablity_of_breakeven(std::vector<double>& last_days, double base_line,double& min, double& max) {
     int high = 0;
-    for(auto i:last_days){
+    for(auto i:last_days) {
         double o = map_range<double>(i,min,max,0,100);
-        if(o > base_line){
+        if(o > base_line) {
             high++;
         }
     }
-    return ((double)high/last_days.size())*100;   
+    return ((double)high/last_days.size())*100;
 }
 
 
 GLplot::GLplot(Window& win)
-: m_window(&win)
+    : m_window(&win)
 {
     hist_data = NULL;
     hist_steps = NULL;
@@ -46,7 +46,9 @@ GLplot::GLplot(Window& win)
 }
 
 void
-GLplot::add_data(double* dataptr, long int samples, long int days, std::vector<StockData>& old) {
+GLplot::add_data(double* dataptr, long int samples, long int days, std::vector<StockData>& old,bool isplot) {
+    goto_home = false;
+    this->isplot = isplot;
     old_data = (double*)malloc(old.size()*sizeof(double));
     old_days = (double*)malloc(old.size()*sizeof(double));
     for(int o = 0; o < old.size(); o++) {
@@ -80,7 +82,7 @@ GLplot::add_data(double* dataptr, long int samples, long int days, std::vector<S
 
     //Calculate Probablity
     this->probability = probablity_of_breakeven(last_day,50,min,max);
-    
+
     //Allocations
     bin_size = 100;
     hist_data = (double*)malloc(sizeof(double)*bin_size);
@@ -101,38 +103,36 @@ GLplot::add_data(double* dataptr, long int samples, long int days, std::vector<S
     }
 }
 
-void
+bool
 GLplot::draw() {
+    if(goto_home == true) return false;
 
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        ImGui::SetNextWindowSize(ImVec2(m_window->getWidth()/2,m_window->getHeight()*0.9));
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    float width = m_window->getWidth(), height = m_window->getHeight(), bh = 0.75, bw = 0.75;
+
+    if(isplot == true) {
+        ImGui::SetNextWindowSize(ImVec2(width/2,height*bh));
         ImGui::SetNextWindowPos(ImVec2(0, 0));
 
-        // Create your ImGui UI elements here
-        ImGui::Begin("My Window",NULL,(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove));  // Begin a new ImGui window
+        ImGui::Begin("Price Paths",NULL,(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove));  // Begin a new ImGui window
 
-        // Add UI elements
-        if (ImPlot::BeginPlot("Stock Price Paths", ImVec2(m_window->getWidth()/2,m_window->getHeight()*0.9))) {
+        if (ImPlot::BeginPlot("Stock Price Paths", ImVec2(width/2,height*bh))) {
             ImPlot::PlotLine("Price Paths History", old_days, old_data, ndays_old);
             for(int i = 0; i < nsamples; i++) {
-                char line_name[20];
-                sprintf(line_name,"Price Path:%d",i);
-                ImPlot::PlotLine(line_name, &stock_days[i*ndays], &stock_data[i*ndays], ndays);
+                ImPlot::PlotLine("Predicted Price Path", &stock_days[i*ndays], &stock_data[i*ndays], ndays);
             }
         }
         ImPlot::EndPlot();
         ImGui::End();
+        ImGui::SetNextWindowSize(ImVec2(width/2,height*bh));
+        ImGui::SetNextWindowPos(ImVec2(width/2, 0));
 
-        ImGui::SetNextWindowSize(ImVec2(m_window->getWidth()/2,m_window->getHeight()*0.9));
-        ImGui::SetNextWindowPos(ImVec2(m_window->getWidth()/2, 0));
-
-        // Create your ImGui UI elements here
-        ImGui::Begin("My Window2",NULL,(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove));  // Begin a new ImGui window
+        ImGui::Begin("Histrogram",NULL,(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove));  // Begin a new ImGui window
 
         // Add UI elements
-        if (ImPlot::BeginPlot("Price Histogram", ImVec2(m_window->getWidth()/2,m_window->getHeight()*0.9))) {
+        if (ImPlot::BeginPlot("Price Histogram", ImVec2(width/2,height*bh))) {
             for(int i = 0; i < nsamples; i++) {
                 ImPlot::PlotLine("Histogram",hist_steps,hist_data,bin_size);
             }
@@ -140,19 +140,48 @@ GLplot::draw() {
         ImPlot::EndPlot();
         ImGui::End();
 
-        ImGui::SetNextWindowSize(ImVec2(m_window->getWidth()/2,m_window->getHeight()*0.1));
-        ImGui::SetNextWindowPos(ImVec2(0, m_window->getHeight()*0.9));
+        //Metrics
+        ImGui::SetNextWindowSize(ImVec2(width/2,height*(1-bh)));
+        ImGui::SetNextWindowPos(ImVec2(0, height*bh));
+    }
 
-        ImGui::Begin("Metrics",NULL,(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove));
-        ImGui::Text("Expected Return: $ %f",expected_return);
-        ImGui::Text("Return Percent : %f percentage",return_percent);
-        ImGui::Text("Probability of Breakeven: %f percentage",probability);
+    else {
+        ImGui::SetNextWindowSize(ImVec2(width*bw,height));
+        ImGui::SetNextWindowPos(ImVec2(0,0));
 
+        ImGui::Begin("Histrogram",NULL,(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove));  // Begin a new ImGui window
+
+        // Add UI elements
+        if (ImPlot::BeginPlot("Price Histogram", ImVec2(width*bw,height))) {
+            for(int i = 0; i < nsamples; i++) {
+                ImPlot::PlotLine("Histogram",hist_steps,hist_data,bin_size);
+            }
+        }
+        ImPlot::EndPlot();
         ImGui::End();
 
+        
+        ImGui::SetNextWindowSize(ImVec2(width*(1-bw),height));
+        ImGui::SetNextWindowPos(ImVec2(width*bw, 0));
+    }
 
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    // Create your ImGui UI elements here
+
+
+    ImGui::Begin("Metrics",NULL,(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove));
+    ImGui::Text("Expected Return: $ %f",expected_return);
+    ImGui::Text("Return Percent : %f percentage",return_percent);
+    ImGui::Text("Probability of Breakeven: %f percentage",probability);
+    if(ImGui::Button("Toggle Price Path")) {
+        isplot = !isplot;
+    }
+    if(ImGui::Button("Home")) {
+        goto_home = true;
+    }
+    ImGui::End();
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    return true;
 }
 
 

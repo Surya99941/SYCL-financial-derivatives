@@ -28,10 +28,12 @@ private:
     double probability;
     
     Window* m_window;
+    bool goto_home;
+    bool isplot;
     
 public:
     GLplot(Window&);
-    void add_data(double* dataptr, long int samples, long int days, std::vector<StockData>& old);
-    void draw();
+    void add_data(double* dataptr, long int samples, long int days, std::vector<StockData>& old,bool isplot);
+    bool draw();
     ~GLplot();
 };

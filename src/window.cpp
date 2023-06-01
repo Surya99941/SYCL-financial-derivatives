@@ -61,7 +61,7 @@ Window::Window(const int width, const int height)
     ImFontAtlas* fontAtlas = io.Fonts;
     ImFontConfig config;
     config.FontDataOwnedByAtlas = false; // Important: Set this to false to prevent ImGui from freeing the font data
-    fontAtlas->AddFontFromMemoryTTF((void*)FontData, FontData_size, 24, &config);
+    fontAtlas->AddFontFromMemoryTTF((void*)FontData, FontData_size, 16, &config);
     
     ImCandy::Theme_Nord();
 
